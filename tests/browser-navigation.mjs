@@ -73,6 +73,15 @@ try{
   await page.locator('#slide-image').waitFor({state:'visible'});
   assert.equal(await page.locator('#slide-count').innerText(),'1 of 1');
   assert.ok(await page.locator('#previous-slide').isDisabled());assert.ok(await page.locator('#next-slide').isDisabled());
+  // Set 3 retains its tutorial source and loads the relevant lecture concepts too.
+  await page.locator('#close-slides').click();
+  const tutorialQuestion=questions.find(q=>q.id==='L4-56');
+  assert.ok(tutorialQuestion);
+  await seed([tutorialQuestion.id]);await page.locator('#show-slides').click();
+  await page.locator('#next-slide').click();await page.locator('#next-slide').click();
+  await page.locator('#slide-image').waitFor({state:'visible'});
+  assert.ok((await page.locator('#slide-caption').innerText()).includes('Lecture 04'));
+  assert.ok((await page.locator('#slide-image').getAttribute('src')).includes('l4/p036.webp'));
   assert.deepEqual(errors,[]);
   console.log('PASS: back/next, answer revisions, partial matching recovery, final rescoring, timed navigation, all aid buttons, multi-lecture slides, image loading, zoom, mobile layout, Escape and load-error retry.');
 }finally{await browser.close();}

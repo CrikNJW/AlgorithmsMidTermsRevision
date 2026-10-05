@@ -1,9 +1,9 @@
 # Algorithm Lab
 
-A static CSD3130 Test 1 revision website, based on the local Lecture 0–5 PDFs.
+A static CSD3130 Test 1 revision website, based on the local Lecture 0–5 and Tutorial 1–5 PDFs.
 
-- 240 original questions: **two sets of 20 per lecture**, with MCQ, fill-in and matching formats.
-- Choose **Set 1** (the original questions), **Set 2** (the new questions), or **Both sets**. For a complete lecture set, select one lecture, the desired set, and 20 questions. Each set has fixed membership; presentation order is randomized.
+- 340 original questions in MCQ, fill-in and matching formats: **two lecture sets of 20 for every lecture**, plus a **tutorial-based Set 3 of 20 for Lectures 1–5**.
+- Choose **Set 1** (original), **Set 2** (new), **Set 3** (tutorial-based) or **All sets**. For a complete lecture set, select one lecture, the desired set, and 20 questions. Each set has fixed membership; presentation order is randomized.
 - Guided practice: optional hints and explanations after each answer.
 - Timed practice: 25 balanced, random questions and 60 minutes. Hints and slides are available; answer explanations appear at the end.
 - One question per page, with Back and Next navigation. Answers remain editable until you finish; the latest answers determine the score. Partially completed answers are saved per question.
@@ -26,15 +26,30 @@ Open http://127.0.0.1:4173. Run `npm test` for question-bank integrity, grading,
 
 Publish the **`docs` directory on `main`** using GitHub Settings → Pages → Deploy from a branch. The entry page and all asset URLs are relative, so the repository subpath is supported. `.nojekyll` keeps these files static.
 
+When changing published assets, update the `?v=` version on the asset URLs in `docs/index.html` and on the imports in `docs/app.js` and `docs/slide-viewer.js`. Otherwise a browser can mix old and new files after a deploy.
+
 Expected URL: https://criknjw.github.io/AlgorithmsMidTermsRevision/
 
-The site publishes WebP images and extracted text of the 197 referenced lecture pages. Original lecture PDFs remain local. The question’s PDF-page references determine the viewer’s slide list, including cross-lecture references. Lecture 0 questions apply the objectives on its page 2, so that slide outlines concepts rather than solving every generated example.
+The site publishes WebP images and extracted text of the 218 referenced lecture pages. Original lecture PDFs remain local. The question’s PDF-page references determine the viewer’s slide list, including cross-lecture references and the lecture concepts behind Set 3 tutorial questions. Lecture 0 questions apply the objectives on its page 2, so that slide outlines concepts rather than solving every generated example.
 
 To regenerate slide assets after changing page references, run `python scripts/build-slides.py` from the repository root with Node, Poppler (`pdftoppm`), Pillow and pypdf available. This creates `docs/slides/` and `docs/slides-manifest.js`; only requested pages are rendered, and images load when the viewer is opened.
 
 ## Question conventions
 
 The bank lives in `docs/questions.js`. Every question includes its lecture, set number, topic, difficulty, hint, explanation, answer key and PDF page reference. MCQ options and matching targets are shuffled without changing their answer identities. Fill-in grading ignores case and surrounding whitespace and accepts equivalent numeric decimals/fractions. It does not evaluate arbitrary expressions. Matching earns one point only if every pair is right; skipped questions earn zero. This is a practice rubric, not a claim about the real test's marking scheme.
+
+Set 3 questions are filed under the lecture each tutorial practises, not in a separate tutorial section. Each one carries a `tutorial` reference (for example `T04 Q2`) shown in its source line:
+
+| Tutorial | Lecture | Set 3 coverage |
+| --- | --- | --- |
+| T01 | L01 | Mutual first choices, the 3×3 instance (stable/unstable matchings, both proposing sides, best valid partners), ordering the six growth functions |
+| T02 | L02 | n log n time scaling, dominant terms, the 8n lg n vs 2n² crossover |
+| T03.1 Q1 | L02 | The triple loop (Θ(n log² n)) and exact counts for n = 16 |
+| T03.1 Q2–Q4 | L03 | Recursive GCD, Master theorem (a)/(b), merge-sort substitution, tree and Master checks |
+| T04 | L04 | Selection, insertion, merge and quicksort traces of E A S Y Q U E S T I O N; swaps per item |
+| T05 | L05 | 6-Queens backtracking points, the 5 m rod-cutting tree, earliest-end meeting scheduling |
+
+Lecture 0 has no tutorial, so it has no Set 3. `npm test` re-derives the tutorial traces independently and checks them against the answer keys.
 
 Lecture 0 is a six-page orientation deck. Its 40 questions apply the learning objectives on page 2 and are explicitly labeled as applications, rather than pretending there are 40 distinct technical facts in that deck. Mock sessions are evenly distributed over the selected lectures; the official test's lecture weighting and question-type ratio are unknown.
 
@@ -44,6 +59,7 @@ The real test is forward-only and closed-book; this revision site deliberately p
 
 - L01 p.31: Θ means a tight asymptotic bound, not average case. Formal definitions in L02 pp.25–27 and [MIT's Big Oh and Theta lecture](https://ocw.mit.edu/courses/6-100l-introduction-to-cs-and-programming-using-python-fall-2022/resources/6100l-lecture-22-version-2_mp4/) support the distinction.
 - L03 pp.55–64: questions use the basic three-case Master theorem in the slides; extended versions may handle more recurrences.
-- L04 pp.5–6: do not generalize the swap remark into “an arbitrary item is swapped at most once.” The questions use the unambiguous comparison count and the actual first-pass behavior.
+- L04 pp.5–6: do not generalize the swap remark into “an arbitrary item is swapped at most once.” The questions use the unambiguous comparison count and the actual first-pass behavior. Tutorial 4 Q2 asks exactly this: with the lecture code, the maximum is n − 1 (e.g. the 5 in [5,1,2,3,4]), and in E A S Y Q U E S T I O N the first S is swapped three times.
+- L04 p.35: the quicksort code ends with `swap(arr[low], arr[j-1])`, which misplaces the pivot (on the slide-36 input 2 9 0 7 8 6 5 1 4 3 it leaves 0 after the pivot). The animation on pp.48–50 swaps the pivot into index `j`; the Tutorial 4 traces follow the animation. The scan `while (pivot >= arr[i])` keeps keys equal to the pivot on the left, so p.33’s “first half smaller than the pivot” is exact only for distinct keys.
 - L05 p.48: the shown 33-minute expression omits the 5-minute job. All nine jobs sum to 102, and three loads of 34 are feasible, proving an optimum of 34.
 - Exam date: 6 October **2026**, 14:30–15:30 SGT, arrival 14:15, per the user's announcement. The isolated “25” year is treated as a typo. No venue allocation file was supplied.

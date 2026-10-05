@@ -6,7 +6,7 @@ import { getSlideRefs } from '../docs/slide-refs.js';
 import { slideManifest } from '../docs/slides-manifest.js';
 import { createSession, upgradeSession, currentAnswer, recordAnswer, validSession } from '../docs/engine.js';
 
-test('all 240 questions resolve to actual rendered lecture pages, including cross-lecture sources',()=>{
+test('all questions resolve to actual rendered lecture pages, including cross-lecture sources',()=>{
   const pageCounts=[6,34,38,65,88,66],seen=new Set();
   for(const q of questions){
     const refs=getSlideRefs(q);assert.ok(refs.length,q.id);
@@ -22,8 +22,8 @@ test('all 240 questions resolve to actual rendered lecture pages, including cros
       }
     }
   }
-  assert.equal(seen.size,197);
-  assert.equal(Object.keys(slideManifest).length,197);
+  assert.equal(seen.size,218);
+  assert.equal(Object.keys(slideManifest).length,218);
   assert.deepEqual(getSlideRefs(questions.find(q=>q.id==='L1-17')).map(r=>[r.lecture,r.page]),[[1,28],[1,29],[1,30],[1,31],[2,25],[2,26],[2,27]]);
 });
 
