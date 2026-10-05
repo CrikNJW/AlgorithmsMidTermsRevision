@@ -18,7 +18,7 @@ export function selectQuestions(bank, lectures, count, random = Math.random) {
   return shuffle(chosen, random);
 }
 export function normalize(value) {
-  return String(value ?? '').normalize('NFKC').trim().toLowerCase().replace(/[−–]/g, '-').replace(/\s+/g, ' ');
+  return String(value ?? '').normalize('NFKC').trim().toLowerCase().replace(/[−–]/g, '-').replace(/\s+/g, ' ').replace(/ ?, ?/g, ',');
 }
 export function grade(q, answer) {
   if (q.type === 'mcq') return Number.isInteger(answer) && answer === q.correct;
