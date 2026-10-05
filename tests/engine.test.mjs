@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { questions, lectures } from '../docs/questions.js';
-import { grade, complete, createSession, remaining, selectQuestions, validSession } from '../docs/engine.js';
+import { grade, complete, createSession, formatQuotas, remaining, selectQuestions, validSession } from '../docs/engine.js';
 
 test('240 complete questions, two sets of 20 per lecture, every format represented',()=>{
   assert.equal(questions.length,240);
@@ -46,6 +46,22 @@ test('mock sampling is unique and balanced; a full practice set covers every que
   assert.equal(selectQuestions(questions,[1],240).length,40);
   assert.equal(selectQuestions(questions,[],25).length,0);
   assert.equal(selectQuestions(questions,[0,1,2,3,4,5],240).length,240);
+});
+test('every session mixes MCQ, fill-in and matching in proportion to the bank',()=>{
+  const counts=qs=>qs.reduce((c,q)=>(c[q.type]++,c),{mcq:0,fib:0,match:0});
+  assert.deepEqual(formatQuotas([],25),{});
+  assert.deepEqual(formatQuotas(questions,25),{mcq:13,fib:7,match:5});
+  for(let i=0;i<200;i++){
+    for(const set of ['all',1,2]){
+      const bank=set==='all'?questions:questions.filter(q=>q.set===set);
+      assert.deepEqual(counts(selectQuestions(bank,[0,1,2,3,4,5],25)),formatQuotas(bank,25));
+      for(const l of lectures){
+        const c=counts(selectQuestions(bank,[l.id],10));
+        assert.deepEqual(c,{mcq:5,fib:3,match:2});
+      }
+    }
+  }
+  assert.deepEqual(counts(selectQuestions(questions,[2],3)),{mcq:1,fib:1,match:1});
 });
 test('fill-in grading accepts equivalent decimals/fractions but not partial text or arithmetic',()=>{
   const q={type:'fib',answers:['14.6']};

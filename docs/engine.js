@@ -8,12 +8,43 @@ export function shuffle(items, random = Math.random) {
   }
   return a;
 }
-// Round-robin sampling keeps short sessions balanced across selected lectures.
+// Every format present in the pool gets a share of the session proportional to its pool size
+// (at least one each when the session is long enough), using largest remainders.
+export function formatQuotas(pool, count) {
+  const available = {};
+  for (const q of pool) available[q.type] = (available[q.type] || 0) + 1;
+  const types = Object.keys(available);
+  const n = Math.min(count, pool.length);
+  const quotas = Object.fromEntries(types.map(t => [t, 0]));
+  if (!n) return quotas;
+  const reserve = n >= types.length ? 1 : 0;
+  types.forEach(t => { quotas[t] = reserve; });
+  const exact = Object.fromEntries(types.map(t => [t, n * available[t] / pool.length]));
+  let left = n - reserve * types.length;
+  types.forEach(t => { const add = Math.min(available[t] - quotas[t], Math.max(0, Math.floor(exact[t]) - quotas[t]), left); quotas[t] += add; left -= add; });
+  while (left > 0) {
+    const t = types.filter(t => quotas[t] < available[t]).sort((a, b) => (exact[b] - quotas[b]) - (exact[a] - quotas[a]) || available[b] - available[a] || (a < b ? -1 : 1))[0];
+    quotas[t]++; left--;
+  }
+  return quotas;
+}
+// Round-robin sampling keeps sessions balanced across selected lectures; within each turn the
+// lecture contributes the format furthest below its quota, so sessions mix MCQ, FIB and matching.
 export function selectQuestions(bank, lectures, count, random = Math.random) {
   const groups = shuffle(lectures, random).map(l => shuffle(bank.filter(q => q.lecture === l), random));
+  const quotas = formatQuotas(groups.flat(), count);
+  const used = Object.fromEntries(Object.keys(quotas).map(t => [t, 0]));
   const chosen = [];
+  const take = (group, i) => { const [q] = group.splice(i, 1); used[q.type]++; chosen.push(q); };
   while (chosen.length < count && groups.some(g => g.length)) {
-    for (const group of groups) if (group.length && chosen.length < count) chosen.push(group.pop());
+    let progressed = false;
+    for (const group of groups) {
+      if (!group.length || chosen.length >= count) continue;
+      let best = -1;
+      group.forEach((q, i) => { if (used[q.type] < quotas[q.type] && (best < 0 || quotas[q.type] - used[q.type] > quotas[group[best].type] - used[group[best].type])) best = i; });
+      if (best >= 0) { take(group, best); progressed = true; }
+    }
+    if (!progressed) for (const group of groups) if (group.length && chosen.length < count) take(group, group.length - 1);
   }
   return shuffle(chosen, random);
 }
