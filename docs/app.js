@@ -11,6 +11,7 @@ let view = 'home';
 let mode = 'practice';
 let selected = [0,1,2,3,4,5];
 let count = '20';
+let questionSet = 'all';
 let onlyMissed = false;
 let timerWarning = false;
 try {
@@ -30,7 +31,7 @@ function source(q) { return `<p class="source">Source: Lecture ${String(q.lectur
 function home() {
   view = 'home';
   main.innerHTML = `
-    <div class="page-heading"><div><p class="eyebrow">YOUR REVISION DESK</p><h1 tabindex="-1">Make the next answer count.</h1><p class="subheading">120 questions. Six lectures. One question at a time.</p></div><span class="edition">LECTURES<br><strong>00—05</strong></span></div>
+    <div class="page-heading"><div><p class="eyebrow">YOUR REVISION DESK</p><h1 tabindex="-1">Make the next answer count.</h1><p class="subheading">${questions.length} questions. Two sets of 20 per lecture.</p></div><span class="edition">LECTURES<br><strong>00—05</strong></span></div>
     <div class="home-grid"><section class="setup-panel" aria-label="Session setup">
       <div class="section-title"><h2>Choose your session</h2><span class="step">01 / MODE</span></div>
       <div class="mode-grid" role="group" aria-label="Session mode">
@@ -38,9 +39,9 @@ function home() {
         <button class="mode-card ${mode==='mock'?'selected':''}" data-mode="mock" aria-pressed="${mode==='mock'}"><span class="mode-icon">◷</span><strong>Exam rehearsal</strong><span>25 questions. 60 minutes.<br>Review answers at the end.</span>${badge('EXAM CONDITIONS')}</button>
       </div>
       <div class="section-title topics-heading"><h2>Pick your lectures</h2><button class="text-button" id="toggle-all">${selected.length===6?'Clear all':'Select all'}</button></div>
-      <div class="lecture-grid">${lectures.map(l=>`<label class="lecture-card ${selected.includes(l.id)?'checked':''}"><input type="checkbox" name="lecture" value="${l.id}" ${selected.includes(l.id)?'checked':''}><span class="lecture-number">${String(l.id).padStart(2,'0')}</span><span class="lecture-text"><strong>${l.title}</strong><span>${l.subtitle}</span></span><span class="question-count">20 Qs</span></label>`).join('')}</div>
+      <div class="lecture-grid">${lectures.map(l=>`<label class="lecture-card ${selected.includes(l.id)?'checked':''}"><input type="checkbox" name="lecture" value="${l.id}" ${selected.includes(l.id)?'checked':''}><span class="lecture-number">${String(l.id).padStart(2,'0')}</span><span class="lecture-text"><strong>${l.title}</strong><span>${l.subtitle}</span></span><span class="question-count">${questions.filter(q=>q.lecture===l.id&&(questionSet==='all'||q.set===Number(questionSet))).length} Qs</span></label>`).join('')}</div>
       <p class="small-note">Lecture 00 applies the introductory learning objectives; it is mainly an orientation lecture.</p>
-      <div class="session-controls"><label ${mode==='mock'?'hidden':''}>Questions<select id="question-count"><option value="10" ${count==='10'?'selected':''}>10 questions</option><option value="20" ${count==='20'?'selected':''}>20 questions</option><option value="all" ${count==='all'?'selected':''}>All selected questions</option></select></label><div class="session-summary" id="session-summary"></div><button class="primary" id="start">${mode==='mock'?'Start mock test':'Start practice'}</button></div>
+      <div class="session-controls"><label>Question set<select id="question-set"><option value="all" ${questionSet==='all'?'selected':''}>Both sets</option><option value="1" ${questionSet==='1'?'selected':''}>Set 1 · Original</option><option value="2" ${questionSet==='2'?'selected':''}>Set 2 · New</option></select></label><label ${mode==='mock'?'hidden':''}>Questions<select id="question-count"><option value="10" ${count==='10'?'selected':''}>10 questions</option><option value="20" ${count==='20'?'selected':''}>20 questions</option><option value="all" ${count==='all'?'selected':''}>All selected questions</option></select></label><div class="session-summary" id="session-summary"></div><button class="primary" id="start">${mode==='mock'?'Start mock test':'Start practice'}</button></div>
       <p id="setup-error" class="error-text" role="alert"></p>
       <div class="rules"><span aria-hidden="true">↳</span><p>Answers lock on submission. There is no back button.<br>One point per question; matching needs every pair correct.</p></div>
     </section>
@@ -57,24 +58,26 @@ function home() {
     updateSetup();
   });
   document.querySelector('#toggle-all').onclick=()=>{selected=selected.length===6?[]:[0,1,2,3,4,5];home();};
+  document.querySelector('#question-set').onchange=e=>{questionSet=e.target.value;home();document.querySelector('#question-set').focus();};
   document.querySelector('#question-count').onchange=e=>{count=e.target.value;updateSetup();};
   document.querySelector('#start').onclick=start;
   document.querySelector('#last-result')?.addEventListener('click',()=>{results();focusHeading();});
   updateSetup();
 }
+function selectedBank() { return questions.filter(q=>selected.includes(q.lecture)&&(questionSet==='all'||q.set===Number(questionSet))); }
 function updateSetup() {
-  const pool=questions.filter(q=>selected.includes(q.lecture)).length;
+  const pool=selectedBank().length;
   const n=mode==='mock'?25:Math.min(pool,count==='all'?pool:Number(count));
   document.querySelector('#session-summary').innerHTML=`<strong>${n} questions</strong><span>${mode==='mock'?'60-minute timer · No hints':'Untimed · Hints available'}</span>`;
-  const message=!pool?'Choose at least one lecture.':mode==='mock'&&pool<25?'Select at least two lectures for a 25-question mock test.':'';
+  const message=!pool?'Choose at least one lecture.':mode==='mock'&&pool<25?'Choose both sets or more lectures to provide 25 mock-test questions.':'';
   document.querySelector('#setup-error').textContent=message;
   document.querySelector('#start').disabled=Boolean(message);
 }
 function start() {
-  const pool=questions.filter(q=>selected.includes(q.lecture));
+  const pool=selectedBank();
   if(!pool.length || (mode==='mock'&&pool.length<25))return;
   const n=mode==='mock'?25:count==='all'?pool.length:Math.min(Number(count),pool.length);
-  session=createSession(selectQuestions(questions,selected,n),mode);
+  session=createSession(selectQuestions(pool,selected,n),mode);
   timerWarning=false;
   save(); quiz(); focusHeading();
 }
@@ -88,7 +91,7 @@ function quiz() {
   main.innerHTML=`<div class="session-top"><div><p class="eyebrow">${isMock?'EXAM REHEARSAL':'GUIDED PRACTICE'}</p><span class="session-rule">One question at a time · Answers lock on submission</span></div><div class="session-top-actions">${isMock?`<div class="timer" aria-label="Time remaining"><span>TIME LEFT</span><strong id="timer"></strong></div>`:badge('UNTIMED')}<button id="end" class="text-button">End session</button></div></div>
     <div class="progress-track" role="progressbar" aria-label="Questions completed" aria-valuemin="0" aria-valuemax="${session.ids.length}" aria-valuenow="${session.index}"><span style="width:${progress}%"></span></div>
     <div class="quiz-layout"><aside class="quiz-sidebar"><span class="large-number">${String(session.index+1).padStart(2,'0')}<small> / ${session.ids.length}</small></span><p class="eyebrow">LECTURE ${String(q.lecture).padStart(2,'0')}</p><h2>${lectures[q.lecture].title}</h2><p>${esc(q.topic)}</p><div class="mini-rule"></div><p class="small-note">${isMock?'Treat this as closed book. Hints and explanations unlock after the test.':'Work it through, then lock your answer. Your explanation appears immediately.'}</p><p class="save-note">Progress saved in this browser</p></aside>
-    <section class="question-card"><div class="question-meta">${badge(typeLabel[q.type])}${badge(q.difficulty,'muted')}<span>${q.id}</span></div><h1 tabindex="-1" class="question-prompt">${esc(q.prompt)}</h1>
+    <section class="question-card"><div class="question-meta">${badge(typeLabel[q.type])}${badge(q.difficulty,'muted')}<span>${q.id} · Set ${q.set}</span></div><h1 tabindex="-1" class="question-prompt">${esc(q.prompt)}</h1>
     <form id="answer-form"><fieldset ${locked?'disabled':''}><legend class="sr-only">Your answer</legend>${answerFields(q,answer)}</fieldset>
     ${!isMock&&!locked?`<button type="button" id="hint" class="hint-button" aria-expanded="${session.hinted.includes(q.id)}" aria-controls="hint-text">${session.hinted.includes(q.id)?'Hint shown':'Need a hint?'}</button><div id="hint-text" class="hint-box" ${session.hinted.includes(q.id)?'':'hidden'}>${esc(q.hint)}</div>`:''}
     ${locked?feedback(q,record):''}
@@ -180,7 +183,7 @@ function results() {
     <div class="results-grid"><section class="score-card"><div class="score-ring" style="--score:${percent}%"><strong>${percent}<span>%</span></strong></div><div><h2>${correct} / ${rows.length} correct</h2><p>${skipped} unanswered · ${Math.floor(seconds/60)}m ${seconds%60}s</p><p>${session.hinted.length} question${session.hinted.length===1?'':'s'} with hints</p></div></section>
     <section class="breakdown"><h2>By lecture</h2>${lectures.filter(l=>rows.some(({q})=>q.lecture===l.id)).map(l=>{const entries=rows.filter(({q})=>q.lecture===l.id),n=entries.filter(({r})=>r.correct).length;return `<div class="breakdown-row"><span>${String(l.id).padStart(2,'0')} · ${l.title}</span><div class="mini-track"><span style="width:${n/entries.length*100}%"></span></div><strong>${n}/${entries.length}</strong></div>`;}).join('')}</section></div>
     <div class="review-heading"><div><h2>Answer review</h2><p>One point per question. Matching is scored only when all pairs are correct.</p></div><div class="review-controls"><label class="filter-label"><input id="only-missed" type="checkbox" ${onlyMissed?'checked':''}> Missed only (${missed.length})</label>${missed.length?'<button id="retry" class="primary">Practise missed questions</button>':''}</div></div>
-    <div class="review-list">${rows.filter(({r})=>!onlyMissed||!r.correct).map(({q,r})=>`<details class="review-item"><summary><span class="result-indicator ${r.correct?'yes':'no'}">${r.correct?'✓':r.skipped?'—':'×'}</span><span><span class="review-meta">${q.id} · ${typeLabel[q.type]} · ${r.skipped?'Unanswered':r.correct?'Correct':'Incorrect'}${session.hinted.includes(q.id)?' · Hint used':''}</span><strong>${esc(q.prompt)}</strong></span><span class="expand-icon" aria-hidden="true">+</span></summary><div class="review-content"><div class="answer-comparison"><p><strong>Your answer</strong><br>${esc(answerText(q,r.value))}</p><p><strong>Correct answer</strong><br>${esc(correctText(q))}</p></div><h3>Why this answer</h3><p>${esc(q.explanation)}</p><p class="review-hint"><strong>Hint:</strong> ${esc(q.hint)}</p>${source(q)}</div></details>`).join('')||'<p class="empty-state">No missed questions. Nicely done.</p>'}</div>`;
+    <div class="review-list">${rows.filter(({r})=>!onlyMissed||!r.correct).map(({q,r})=>`<details class="review-item"><summary><span class="result-indicator ${r.correct?'yes':'no'}">${r.correct?'✓':r.skipped?'—':'×'}</span><span><span class="review-meta">${q.id} · Set ${q.set} · ${typeLabel[q.type]} · ${r.skipped?'Unanswered':r.correct?'Correct':'Incorrect'}${session.hinted.includes(q.id)?' · Hint used':''}</span><strong>${esc(q.prompt)}</strong></span><span class="expand-icon" aria-hidden="true">+</span></summary><div class="review-content"><div class="answer-comparison"><p><strong>Your answer</strong><br>${esc(answerText(q,r.value))}</p><p><strong>Correct answer</strong><br>${esc(correctText(q))}</p></div><h3>Why this answer</h3><p>${esc(q.explanation)}</p><p class="review-hint"><strong>Hint:</strong> ${esc(q.hint)}</p>${source(q)}</div></details>`).join('')||'<p class="empty-state">No missed questions. Nicely done.</p>'}</div>`;
   document.querySelector('#new-session').onclick=()=>{home();focusHeading();};
   document.querySelector('#only-missed').onchange=e=>{onlyMissed=e.target.checked;results();document.querySelector('#only-missed').focus();};
   document.querySelector('#retry')?.addEventListener('click',()=>{session=createSession(missed.map(({q})=>q),'practice');onlyMissed=false;save();quiz();focusHeading();});

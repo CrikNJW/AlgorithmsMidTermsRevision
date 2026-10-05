@@ -2,7 +2,8 @@
 
 A static CSD3130 Test 1 revision website, based on the local Lecture 0–5 PDFs.
 
-- 120 original questions: **20 per lecture**, with MCQ, fill-in and matching formats.
+- 240 original questions: **two sets of 20 per lecture**, with MCQ, fill-in and matching formats.
+- Choose **Set 1** (the original questions), **Set 2** (the new questions), or **Both sets**. For a complete lecture set, select one lecture, the desired set, and 20 questions. Each set has fixed membership; presentation order is randomized.
 - Guided practice: optional hints and explanations after each answer.
 - Exam rehearsal: 25 balanced, random questions, 60 minutes, no hints or answers until the end.
 - One question per page, locked submissions and no backward navigation within a session.
@@ -30,9 +31,9 @@ Only the website and development files are committed. The lecture PDFs and extra
 
 ## Question conventions
 
-The bank lives in `docs/questions.js`. Every question includes its lecture, topic, difficulty, hint, explanation, answer key and PDF page reference. MCQ options and matching targets are shuffled without changing their answer identities. Fill-in grading ignores case and surrounding whitespace and accepts equivalent numeric decimals/fractions. It does not evaluate arbitrary expressions. Matching earns one point only if every pair is right; skipped questions earn zero. This is a practice rubric, not a claim about the real test's marking scheme.
+The bank lives in `docs/questions.js`. Every question includes its lecture, set number, topic, difficulty, hint, explanation, answer key and PDF page reference. MCQ options and matching targets are shuffled without changing their answer identities. Fill-in grading ignores case and surrounding whitespace and accepts equivalent numeric decimals/fractions. It does not evaluate arbitrary expressions. Matching earns one point only if every pair is right; skipped questions earn zero. This is a practice rubric, not a claim about the real test's marking scheme.
 
-Lecture 0 is a six-page orientation deck. Its 20 questions apply the learning objectives on page 2 and are explicitly labeled as applications, rather than pretending there are 20 distinct technical facts in that deck. Mock sessions are evenly distributed over the selected lectures; the official test's lecture weighting and question-type ratio are unknown.
+Lecture 0 is a six-page orientation deck. Its 40 questions apply the learning objectives on page 2 and are explicitly labeled as applications, rather than pretending there are 40 distinct technical facts in that deck. Mock sessions are evenly distributed over the selected lectures; the official test's lecture weighting and question-type ratio are unknown.
 
 The site is not an official exam or an Examena integration. Its client-side answer bank is available to anyone inspecting the source, so it is intended for self-study rather than secure assessment.
 
