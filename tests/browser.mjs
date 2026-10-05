@@ -34,9 +34,10 @@ try{
   await page.setViewportSize({width:390,height:844});assert.equal(await overflow(),false);
   await page.screenshot({path:'tmp/home-mobile.png',fullPage:true});
   await page.locator('#start').click();
-  const initial=await state();assert.equal(initial.ids.length,240);
+  const total=questions.length,half=total/2;
+  const initial=await state();assert.equal(initial.ids.length,total);
   const captured=new Set();
-  for(let i=0;i<240;i++){
+  for(let i=0;i<total;i++){
     const s=await state(),q=questions.find(q=>q.id===s.ids[s.index]);
     assert.equal(s.index,i);assert.equal(await page.locator('#feedback').count(),0);
     assert.ok(await page.locator('#submit').isDisabled());
@@ -59,12 +60,12 @@ try{
     if(i===1){await page.reload();assert.notEqual(await page.locator('fieldset').getAttribute('disabled'),null);assert.equal((await state()).index,1);}
     await page.locator('#next').click();
   }
-  assert.ok((await page.locator('.score-card').innerText()).includes('120 / 240 correct'));
-  assert.equal(await page.locator('.review-item').count(),240);
-  await page.locator('#only-missed').check();assert.equal(await page.locator('.review-item').count(),120);
+  assert.ok((await page.locator('.score-card').innerText()).includes(`${half} / ${total} correct`));
+  assert.equal(await page.locator('.review-item').count(),total);
+  await page.locator('#only-missed').check();assert.equal(await page.locator('.review-item').count(),half);
   await page.locator('.review-item summary').first().click();assert.equal(await overflow(),false);
   await page.screenshot({path:'tmp/results-mobile.png',fullPage:true});
-  await page.locator('#retry').click();assert.equal((await state()).ids.length,120);assert.equal((await state()).mode,'practice');
+  await page.locator('#retry').click();assert.equal((await state()).ids.length,half);assert.equal((await state()).mode,'practice');
   await page.locator('#skip').click();await page.locator('#cancel').click();assert.equal((await state()).index,0);
   await page.locator('#skip').click();await page.locator('#confirm').click();assert.ok((await state()).answers[(await state()).ids[0]].skipped);
   await page.locator('#next').click();await page.locator('#end').click();await page.locator('#confirm').click();
@@ -96,15 +97,21 @@ try{
   await page.locator('#new-session').click();
   await page.evaluate(()=>document.documentElement.style.fontSize='200%');assert.equal(await overflow(),false);
   assert.deepEqual(errors,[]);
-  console.log('PASS: all 240 guided questions; all formats; right/wrong feedback; hints; reload and lock; scoring; missed retry; skip confirmation; 25-question mock; automatic and restored timeout; mobile layout; no JS errors.');
+  console.log(`PASS: all ${total} guided questions; all formats; right/wrong feedback; hints; reload and lock; scoring; missed retry; skip confirmation; 25-question mock; automatic and restored timeout; mobile layout; no JS errors.`);
   await page.evaluate(()=>document.documentElement.style.fontSize='');
-  for(const set of [1,2]){
+  let selections=0;
+  for(const set of [1,2,3]){
     for(let lecture=0;lecture<6;lecture++){
       await page.locator('[data-mode=practice]').click();
       await page.locator('#question-set').selectOption(String(set));
       await page.locator('#question-count').selectOption('20');
       for(let l=0;l<6;l++)await page.locator(`[name=lecture][value="${l}"]`).setChecked(l===lecture);
-      await page.locator('#start').click();
+      if(!questions.some(q=>q.lecture===lecture&&q.set===set)){
+        assert.ok(await page.locator('#start').isDisabled());
+        assert.ok((await page.locator('#setup-error').innerText()).includes('no tutorial questions'));
+        continue;
+      }
+      await page.locator('#start').click();selections++;
       const s=await state();
       const expected=questions.filter(q=>q.lecture===lecture&&q.set===set).map(q=>q.id).sort();
       assert.deepEqual([...s.ids].sort(),expected);
@@ -122,7 +129,7 @@ try{
   await page.setViewportSize({width:390,height:844});assert.equal(await overflow(),false);
   await page.screenshot({path:'tmp/set-selector-mobile.png',fullPage:true});
   assert.deepEqual(errors,[]);
-  console.log('PASS: all 12 lecture/set selections contain exactly their 20 fixed questions; mock filtering stays within the chosen set.');
+  console.log(`PASS: all ${selections} lecture/set selections contain exactly their 20 fixed questions; mock filtering stays within the chosen set.`);
   // Storage refusal must leave the site usable with a visible recovery limitation.
   const isolated=await browser.newContext();const blocked=await isolated.newPage();
   await blocked.addInitScript(()=>{Storage.prototype.setItem=function(){throw new DOMException('Blocked','SecurityError');};});
