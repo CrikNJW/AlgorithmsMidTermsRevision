@@ -44,6 +44,7 @@ try{
   await page.locator('#slide-zoom').click();assert.equal(await page.locator('#slide-zoom').getAttribute('aria-pressed'),'true');
   assert.ok(await page.locator('.slide-frame').evaluate(el=>el.scrollWidth>el.clientWidth));
   await page.locator('#slide-zoom').click();await page.keyboard.press('Escape');
+  await page.locator('dialog').waitFor({state:'detached'});
   assert.equal(await page.locator('dialog').count(),0);
   assert.equal(await page.locator('#match-0').inputValue(),'0');
   await page.locator('#hint').click();assert.ok(await page.locator('#hint-text').isVisible());
