@@ -50,14 +50,15 @@ try{
     }
     if(i===1){
       const before=await state();await page.reload();await page.locator('#submit').waitFor();
-      const after=await state();assert.deepEqual(before.order,after.order);assert.deepEqual(before.draft,after.draft);assert.equal(before.index,after.index);
+      const after=await state();assert.deepEqual(before.order,after.order);assert.deepEqual(before.drafts,after.drafts);assert.equal(before.index,after.index);
     }
     await page.locator('#submit').click();
     const after=await state();assert.equal(after.answers[q.id].correct,right,q.id);
-    assert.notEqual(await page.locator('fieldset').getAttribute('disabled'),null);
+    assert.equal(await page.locator('fieldset').getAttribute('disabled'),null);
     assert.ok((await page.locator('#feedback').innerText()).includes(q.explanation));
-    if(i===1){await page.reload();assert.notEqual(await page.locator('fieldset').getAttribute('disabled'),null);assert.equal((await state()).index,1);}
+    if(i===1){await page.reload();assert.equal(await page.locator('fieldset').getAttribute('disabled'),null);assert.equal((await state()).index,1);}
     await page.locator('#next').click();
+    if(i===239)await page.locator('#confirm').click();
   }
   assert.ok((await page.locator('.score-card').innerText()).includes('120 / 240 correct'));
   assert.equal(await page.locator('.review-item').count(),240);
@@ -65,19 +66,27 @@ try{
   await page.locator('.review-item summary').first().click();assert.equal(await overflow(),false);
   await page.screenshot({path:'tmp/results-mobile.png',fullPage:true});
   await page.locator('#retry').click();assert.equal((await state()).ids.length,120);assert.equal((await state()).mode,'practice');
-  await page.locator('#skip').click();await page.locator('#cancel').click();assert.equal((await state()).index,0);
-  await page.locator('#skip').click();await page.locator('#confirm').click();assert.ok((await state()).answers[(await state()).ids[0]].skipped);
-  await page.locator('#next').click();await page.locator('#end').click();await page.locator('#confirm').click();
+  assert.ok(await page.locator('#previous').isDisabled());
+  await page.locator('#next').click();assert.equal((await state()).index,1);
+  await page.locator('#previous').click();assert.equal((await state()).index,0);
+  const reviseState=await state(),reviseQuestion=questions.find(q=>q.id===reviseState.ids[0]);
+  await respond(reviseQuestion,true);await page.locator('#submit').click();
+  await page.locator('#next').click();await page.locator('#previous').click();
+  await respond(reviseQuestion,false);assert.equal(await page.locator('#feedback').count(),0);
+  await page.locator('#end').click();await page.locator('#cancel').click();
+  await page.locator('#end').click();await page.locator('#confirm').click();
+  assert.equal((await state()).answers[reviseQuestion.id].correct,false);
   assert.ok((await state()).finished);await page.locator('#new-session').click();
   await page.setViewportSize({width:1440,height:1000});
   await page.locator('[data-mode=mock]').click();await page.locator('#start').click();
   const mock=await state();assert.equal(mock.ids.length,25);assert.equal(mock.deadline-mock.start,3600000);
   for(let i=0;i<25;i++){
     const s=await state(),q=questions.find(q=>q.id===s.ids[s.index]);
-    assert.equal(await page.locator('#hint').count(),0);assert.equal(await page.locator('#feedback').count(),0);
+    assert.equal(await page.locator('#hint').count(),1);assert.equal(await page.locator('#feedback').count(),0);
     await respond(q,true);
     if(i===0){await page.screenshot({path:'tmp/mock-desktop.png',fullPage:true});await page.reload();assert.equal((await state()).deadline,mock.deadline);}
-    await page.locator('#submit').click();
+    await page.locator('#next').click();
+    if(i===24)await page.locator('#confirm').click();
   }
   assert.ok((await page.locator('.score-card').innerText()).includes('25 / 25 correct'));
   await page.screenshot({path:'tmp/results-desktop.png',fullPage:true});
@@ -89,14 +98,14 @@ try{
   await page.evaluate(k=>{const s=JSON.parse(localStorage.getItem(k));s.deadline=Date.now()+3000;localStorage.setItem(k,JSON.stringify(s));},key);
   await page.reload();
   const exp=await state(),q=questions.find(q=>q.id===exp.ids[0]);await respond(q,true);
-  await page.locator('#end').click(); // Timeout must also work while a confirmation dialog is open.
+  await page.locator('#show-slides').click(); // Timeout must also submit while lecture slides are open.
   await page.getByRole('heading',{name:'Time’s up. Let’s review.'}).waitFor({timeout:7000});
   assert.ok((await state()).timedOut);assert.equal(await page.locator('dialog').count(),0);
   assert.ok((await state()).answers[q.id].correct);
   await page.locator('#new-session').click();
   await page.evaluate(()=>document.documentElement.style.fontSize='200%');assert.equal(await overflow(),false);
   assert.deepEqual(errors,[]);
-  console.log('PASS: all 240 guided questions; all formats; right/wrong feedback; hints; reload and lock; scoring; missed retry; skip confirmation; 25-question mock; automatic and restored timeout; mobile layout; no JS errors.');
+  console.log('PASS: all 240 guided questions; all formats; right/wrong feedback; hints; reload and revision; scoring; missed retry; backward navigation; 25-question mock; automatic and restored timeout; mobile layout; no JS errors.');
   await page.evaluate(()=>document.documentElement.style.fontSize='');
   for(const set of [1,2]){
     for(let lecture=0;lecture<6;lecture++){

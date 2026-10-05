@@ -5,9 +5,10 @@ A static CSD3130 Test 1 revision website, based on the local Lecture 0–5 PDFs.
 - 240 original questions: **two sets of 20 per lecture**, with MCQ, fill-in and matching formats.
 - Choose **Set 1** (the original questions), **Set 2** (the new questions), or **Both sets**. For a complete lecture set, select one lecture, the desired set, and 20 questions. Each set has fixed membership; presentation order is randomized.
 - Guided practice: optional hints and explanations after each answer.
-- Exam rehearsal: 25 balanced, random questions, 60 minutes, no hints or answers until the end.
-- One question per page, locked submissions and no backward navigation within a session.
+- Timed practice: 25 balanced, random questions and 60 minutes. Hints and slides are available; answer explanations appear at the end.
+- One question per page, with Back and Next navigation. Answers remain editable until you finish; the latest answers determine the score. Partially completed answers are saved per question.
 - Results include every explanation, lecture page references, per-lecture scores and missed-question practice.
+- “Need a hint?” and “Show relevant slides” buttons appear together in both modes. The slide viewer displays the original referenced PDF pages with page navigation, zoom, full-size links and extracted text.
 - Browser-local session recovery. Mock time keeps running when the tab is hidden or closed.
 - No account, backend, API key, tracking or paid service. Google Fonts is optional; system fonts are the fallback.
 
@@ -27,7 +28,9 @@ Publish the **`docs` directory on `main`** using GitHub Settings → Pages → D
 
 Expected URL: https://criknjw.github.io/AlgorithmsMidTermsRevision/
 
-Only the website and development files are committed. The lecture PDFs and extracted text are not published with the site. Reference the PDFs locally by the filenames in `docs/questions.js`.
+The site publishes WebP images and extracted text of the 197 referenced lecture pages. Original lecture PDFs remain local. The question’s PDF-page references determine the viewer’s slide list, including cross-lecture references. Lecture 0 questions apply the objectives on its page 2, so that slide outlines concepts rather than solving every generated example.
+
+To regenerate slide assets after changing page references, run `python scripts/build-slides.py` from the repository root with Node, Poppler (`pdftoppm`), Pillow and pypdf available. This creates `docs/slides/` and `docs/slides-manifest.js`; only requested pages are rendered, and images load when the viewer is opened.
 
 ## Question conventions
 
@@ -35,7 +38,7 @@ The bank lives in `docs/questions.js`. Every question includes its lecture, set 
 
 Lecture 0 is a six-page orientation deck. Its 40 questions apply the learning objectives on page 2 and are explicitly labeled as applications, rather than pretending there are 40 distinct technical facts in that deck. Mock sessions are evenly distributed over the selected lectures; the official test's lecture weighting and question-type ratio are unknown.
 
-The site is not an official exam or an Examena integration. Its client-side answer bank is available to anyone inspecting the source, so it is intended for self-study rather than secure assessment.
+The real test is forward-only and closed-book; this revision site deliberately permits navigation, hints and slides. The site is not an official exam or an Examena integration. Its client-side answer bank is available to anyone inspecting the source, so it is intended for self-study rather than secure assessment.
 
 ## Source clarifications
 
