@@ -31,12 +31,12 @@ function source(q) { return `<p class="source">Source: Lecture ${String(q.lectur
 function home() {
   view = 'home';
   main.innerHTML = `
-    <div class="page-heading"><div><p class="eyebrow">YOUR REVISION DESK</p><h1 tabindex="-1">Make the next answer count.</h1><p class="subheading">${questions.length} questions. Two sets of 20 per lecture.</p></div><span class="edition">LECTURES<br><strong>00—05</strong></span></div>
+    <div class="page-heading"><div><p class="eyebrow">YOUR REVISION DESK</p><h1 tabindex="-1">Make the next answer count.</h1></div><span class="edition">LECTURES<br><strong>00—05</strong></span></div>
     <div class="home-grid"><section class="setup-panel" aria-label="Session setup">
       <div class="section-title"><h2>Choose your session</h2><span class="step">01 / MODE</span></div>
       <div class="mode-grid" role="group" aria-label="Session mode">
-        <button class="mode-card ${mode==='practice'?'selected':''}" data-mode="practice" aria-pressed="${mode==='practice'}"><span class="mode-icon">✦</span><strong>Guided practice</strong><span>Take your time. Use hints.<br>Learn after every answer.</span>${badge('LEARN AS YOU GO')}</button>
-        <button class="mode-card ${mode==='mock'?'selected':''}" data-mode="mock" aria-pressed="${mode==='mock'}"><span class="mode-icon">◷</span><strong>Exam rehearsal</strong><span>25 questions. 60 minutes.<br>Review answers at the end.</span>${badge('EXAM CONDITIONS')}</button>
+        <button class="mode-card ${mode==='practice'?'selected':''}" data-mode="practice" aria-pressed="${mode==='practice'}"><span class="mode-icon">✦</span><strong>Guided practice</strong><span>Practice questions without a time limit. Explanations and hints are available.</span>${badge('LEARN AS YOU GO')}</button>
+        <button class="mode-card ${mode==='mock'?'selected':''}" data-mode="mock" aria-pressed="${mode==='mock'}"><span class="mode-icon">◷</span><strong>Exam rehearsal</strong><span>25 questions, 60 minutes. No explanations until the end.</span>${badge('EXAM CONDITIONS')}</button>
       </div>
       <div class="section-title topics-heading"><h2>Pick your lectures</h2><button class="text-button" id="toggle-all">${selected.length===6?'Clear all':'Select all'}</button></div>
       <div class="lecture-grid">${lectures.map(l=>`<label class="lecture-card ${selected.includes(l.id)?'checked':''}"><input type="checkbox" name="lecture" value="${l.id}" ${selected.includes(l.id)?'checked':''}><span class="lecture-number">${String(l.id).padStart(2,'0')}</span><span class="lecture-text"><strong>${l.title}</strong><span>${l.subtitle}</span></span><span class="question-count">${questions.filter(q=>q.lecture===l.id&&(questionSet==='all'||q.set===Number(questionSet))).length} Qs</span></label>`).join('')}</div>
