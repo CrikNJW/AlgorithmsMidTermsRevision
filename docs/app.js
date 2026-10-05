@@ -1,5 +1,5 @@
-import { lectures, questions, setNames } from './questions.js';
-import { selectQuestions, createSession, complete, grade, remaining, validSession } from './engine.js';
+import { lectures, questions, setNames } from './questions.js?v=2026-10-05.2';
+import { selectQuestions, createSession, complete, grade, remaining, validSession } from './engine.js?v=2026-10-05.2';
 
 const main = document.querySelector('main');
 const key = 'algorithm-lab-session-v1';

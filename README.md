@@ -25,6 +25,8 @@ Open http://127.0.0.1:4173. Run `npm test` for question-bank integrity, grading,
 
 Publish the **`docs` directory on `main`** using GitHub Settings → Pages → Deploy from a branch. The entry page and all asset URLs are relative, so the repository subpath is supported. `.nojekyll` keeps these files static.
 
+GitHub Pages lets browsers cache each file for 10 minutes. When you change any file in `docs`, update the `?v=` version on the asset URLs in `docs/index.html` and on the imports at the top of `docs/app.js`. Otherwise a browser can mix old and new files after a deploy.
+
 Expected URL: https://criknjw.github.io/AlgorithmsMidTermsRevision/
 
 Only the website and development files are committed. The lecture PDFs and extracted text are not published with the site. Reference the PDFs locally by the filenames in `docs/questions.js`.
