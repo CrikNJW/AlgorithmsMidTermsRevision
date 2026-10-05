@@ -1,6 +1,6 @@
-import { lectures } from './questions.js?v=2026-10-05.3';
-import { getSlideRefs } from './slide-refs.js?v=2026-10-05.3';
-import { slideManifest } from './slides-manifest.js?v=2026-10-05.3';
+import { lectures } from './questions.js?v=2026-10-05.4';
+import { getSlideRefs } from './slide-refs.js?v=2026-10-05.4';
+import { slideManifest } from './slides-manifest.js?v=2026-10-05.4';
 
 export function showSlides(question) {
   const refs = getSlideRefs(question);

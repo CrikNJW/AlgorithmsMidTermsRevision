@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import { questions, lectures } from '../docs/questions.js';
 import { grade, complete, createSession, remaining, selectQuestions, validSession } from '../docs/engine.js';
 
-test('340 complete questions: two lecture sets per lecture plus a tutorial set for L01–L05',()=>{
-  assert.equal(questions.length,340);
-  assert.equal(new Set(questions.map(q=>q.id)).size,340);
-  assert.equal(new Set(questions.map(q=>q.prompt)).size,340);
+test('460 complete questions: original sets plus 20 new conceptual questions per lecture',()=>{
+  assert.equal(questions.length,460);
+  assert.equal(new Set(questions.map(q=>q.id)).size,460);
+  assert.equal(new Set(questions.map(q=>q.prompt)).size,460);
   for(const l of lectures){
     const bank=questions.filter(q=>q.lecture===l.id);
-    const sets=l.id===0?[1,2]:[1,2,3];
+    const sets=l.id===0?[1,2,4]:[1,2,3,4];
     assert.equal(bank.length,20*sets.length);
     assert.deepEqual([...new Set(bank.map(q=>q.set))].sort(),sets);
     for(const set of sets) {
@@ -46,9 +46,9 @@ test('mock sampling is unique and balanced; a full practice set covers every que
     assert.equal(picked.length,25);assert.equal(new Set(picked.map(q=>q.id)).size,25);
     for(const l of lectures){const n=picked.filter(q=>q.lecture===l.id).length;assert.ok(n===4||n===5);}
   }
-  assert.equal(selectQuestions(questions,[1],340).length,60);
+  assert.equal(selectQuestions(questions,[1],460).length,80);
   assert.equal(selectQuestions(questions,[],25).length,0);
-  assert.equal(selectQuestions(questions,[0,1,2,3,4,5],340).length,340);
+  assert.equal(selectQuestions(questions,[0,1,2,3,4,5],460).length,460);
 });
 test('fill-in grading accepts equivalent decimals/fractions but not partial text or arithmetic',()=>{
   const q={type:'fib',answers:['14.6']};
@@ -127,7 +127,7 @@ test('set 2 numeric and trace answers agree with independent calculations',()=>{
 });
 
 test('set sampling remains disjoint and old saved sessions are still valid',()=>{
-  for(const set of [1,2,3]){
+  for(const set of [1,2,3,4]){
     const bank=questions.filter(q=>q.set===set);
     assert.equal(bank.length,set===3?100:120);
     const sample=selectQuestions(bank,[0,1,2,3,4,5],25);

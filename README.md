@@ -2,8 +2,11 @@
 
 A static CSD3130 Test 1 revision website, based on the local Lecture 0–5 and Tutorial 1–5 PDFs.
 
-- 340 original questions in MCQ, fill-in and matching formats: **two lecture sets of 20 for every lecture**, plus a **tutorial-based Set 3 of 20 for Lectures 1–5**.
-- Choose **Set 1** (original), **Set 2** (new), **Set 3** (tutorial-based) or **All sets**. For a complete lecture set, select one lecture, the desired set, and 20 questions. Each set has fixed membership; presentation order is randomized.
+- 460 questions in MCQ, fill-in and matching formats: **two lecture sets of 20 for every lecture**, a **tutorial-based Set 3 of 20 for Lectures 1–5**, and a **conceptual Set 4 of 20 for every lecture**.
+- Choose **Set 1** (original), **Set 2** (new), **Set 3** (tutorial-based), **Set 4** (conceptual) or **All sets**. For a complete lecture set, select one lecture, the desired set, and 20 questions. Each set has fixed membership; presentation order is randomized.
+- Focus presets target **75% arithmetic** (Arithmetic), **50% arithmetic** (Balanced), or **25% arithmetic** (Conceptual). A **0–100% arithmetic slider**, in 1% steps, permits any custom mix; conceptual is the remainder. Counts are rounded to whole questions, with the actual mix displayed before starting.
+- Arithmetic covers exact calculations, counts and worked traces; conceptual covers principles, correctness and symbolic asymptotic reasoning. The bank contains 164 arithmetic and 296 conceptual questions. Sampling preserves lecture balance, using the closest available mix if a selected pool cannot meet the requested percentage. “All selected questions” includes the entire pool. Missed-question retries include every missed question rather than resampling it.
+- [Full list of the 120 new questions](QUESTION_CHANGES.md). All 340 existing question prompts, answers, hints and explanations are preserved.
 - Guided practice: optional hints and explanations after each answer.
 - Timed practice: 25 balanced, random questions and 60 minutes. Hints and slides are available; answer explanations appear at the end.
 - One question per page, with Back and Next navigation. Answers remain editable until you finish; the latest answers determine the score. Partially completed answers are saved per question.
@@ -30,7 +33,7 @@ When changing published assets, update the `?v=` version on the asset URLs in `d
 
 Expected URL: https://criknjw.github.io/AlgorithmsMidTermsRevision/
 
-The site publishes WebP images and extracted text of the 218 referenced lecture pages. Original lecture PDFs remain local. The question’s PDF-page references determine the viewer’s slide list, including cross-lecture references and the lecture concepts behind Set 3 tutorial questions. Lecture 0 questions apply the objectives on its page 2, so that slide outlines concepts rather than solving every generated example.
+The site publishes WebP images and extracted text of the 219 referenced lecture pages. Original lecture PDFs remain local. The question’s PDF-page references determine the viewer’s slide list, including cross-lecture references and the lecture concepts behind Set 3 tutorial questions. Lecture 0 questions apply the objectives on its page 2, so that slide outlines concepts rather than solving every generated example.
 
 To regenerate slide assets after changing page references, run `python scripts/build-slides.py` from the repository root with Node, Poppler (`pdftoppm`), Pillow and pypdf available. This creates `docs/slides/` and `docs/slides-manifest.js`; only requested pages are rendered, and images load when the viewer is opened.
 
@@ -51,7 +54,7 @@ Set 3 questions are filed under the lecture each tutorial practises, not in a se
 
 Lecture 0 has no tutorial, so it has no Set 3. `npm test` re-derives the tutorial traces independently and checks them against the answer keys.
 
-Lecture 0 is a six-page orientation deck. Its 40 questions apply the learning objectives on page 2 and are explicitly labeled as applications, rather than pretending there are 40 distinct technical facts in that deck. Mock sessions are evenly distributed over the selected lectures; the official test's lecture weighting and question-type ratio are unknown.
+Lecture 0 is a six-page orientation deck. Its 60 questions apply the learning objectives on page 2 and are explicitly labeled as applications. Mock sessions are evenly distributed over the selected lectures; the official test's lecture weighting and question-type ratio are unknown.
 
 The real test is forward-only and closed-book; this revision site deliberately permits navigation, hints and slides. The site is not an official exam or an Examena integration. Its client-side answer bank is available to anyone inspecting the source, so it is intended for self-study rather than secure assessment.
 

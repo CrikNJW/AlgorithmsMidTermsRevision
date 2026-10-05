@@ -22,8 +22,7 @@ test('all questions resolve to actual rendered lecture pages, including cross-le
       }
     }
   }
-  assert.equal(seen.size,218);
-  assert.equal(Object.keys(slideManifest).length,218);
+  assert.equal(seen.size,Object.keys(slideManifest).length);
   assert.deepEqual(getSlideRefs(questions.find(q=>q.id==='L1-17')).map(r=>[r.lecture,r.page]),[[1,28],[1,29],[1,30],[1,31],[2,25],[2,26],[2,27]]);
 });
 

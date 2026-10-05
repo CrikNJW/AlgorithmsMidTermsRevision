@@ -16,7 +16,7 @@ const overflow=()=>page.evaluate(()=>document.documentElement.scrollWidth>window
 await mkdir('tmp',{recursive:true});
 async function respond(q,right=true){
   if(q.type==='mcq')await page.locator(`input[value="${right?q.correct:(q.correct+1)%q.options.length}"]`).check();
-  else if(q.type==='fib')await page.locator('#fill-answer').fill(right?q.answers[0]:'incorrect');
+  else if(q.type==='fib')await page.locator('#fill-answer').fill(right?q.answers[0]:'definitely wrong');
   else for(let i=0;i<q.pairs.length;i++)await page.locator(`#match-${i}`).selectOption(String(right?i:(i+1)%q.pairs.length));
 }
 try{
@@ -109,7 +109,7 @@ try{
   console.log(`PASS: all ${total} guided questions; all formats; right/wrong feedback; hints; reload and revision; scoring; missed retry; backward navigation; 25-question mock; automatic and restored timeout; mobile layout; no JS errors.`);
   await page.evaluate(()=>document.documentElement.style.fontSize='');
   let selections=0;
-  for(const set of [1,2,3]){
+  for(const set of [1,2,3,4]){
     for(let lecture=0;lecture<6;lecture++){
       await page.locator('[data-mode=practice]').click();
       await page.locator('#question-set').selectOption(String(set));

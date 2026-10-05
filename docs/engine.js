@@ -17,6 +17,42 @@ export function selectQuestions(bank, lectures, count, random = Math.random) {
   }
   return shuffle(chosen, random);
 }
+export const focusRatios = { arithmetic: 0.75, balanced: 0.5, conceptual: 0.25 };
+// Allocate lecture quotas first, then find the closest feasible focus mix within them.
+// The same plan drives the setup preview and sampling, so advertised counts are exact.
+export function planQuestionMix(bank, lectures, count, arithmeticPercent = 50) {
+  const groups = [...new Set(lectures)].map(lecture => {
+    const pool = bank.filter(q => q.lecture === lecture);
+    return { lecture, pool, arithmeticPool: pool.filter(q => q.focus === 'arithmetic'), conceptualPool: pool.filter(q => q.focus !== 'arithmetic'), count: 0, arithmetic: 0 };
+  }).filter(g => g.pool.length);
+  const total = Math.min(Math.max(0, Math.floor(count)), groups.reduce((n,g) => n + g.pool.length, 0));
+  let allocated = 0;
+  while (allocated < total) {
+    for (const g of groups) if (g.count < g.pool.length && allocated < total) { g.count++; allocated++; }
+  }
+  for (const g of groups) {
+    g.arithmetic = Math.max(0, g.count - g.conceptualPool.length);
+    g.maxArithmetic = Math.min(g.count, g.arithmeticPool.length);
+  }
+  const percent = Number.isFinite(arithmeticPercent) ? Math.max(0, Math.min(100, arithmeticPercent)) : 50;
+  const requested = Math.round(total * percent / 100);
+  const minimum = groups.reduce((n,g) => n + g.arithmetic, 0);
+  const maximum = groups.reduce((n,g) => n + g.maxArithmetic, 0);
+  const arithmetic = Math.min(maximum, Math.max(minimum, requested));
+  for (let n = minimum; n < arithmetic; n++) {
+    const candidates = groups.filter(g => g.arithmetic < g.maxArithmetic);
+    candidates.sort((a,b) => a.arithmetic / a.count - b.arithmetic / b.count);
+    candidates[0].arithmetic++;
+  }
+  return { total, arithmetic, conceptual: total - arithmetic, requested, groups };
+}
+export function selectFocusedQuestions(bank, lectures, count, arithmeticPercent = 50, random = Math.random) {
+  const plan = planQuestionMix(bank, lectures, count, arithmeticPercent);
+  return shuffle(plan.groups.flatMap(g => [
+    ...shuffle(g.arithmeticPool, random).slice(0, g.arithmetic),
+    ...shuffle(g.conceptualPool, random).slice(0, g.count - g.arithmetic),
+  ]), random);
+}
 export function normalize(value) {
   return String(value ?? '').normalize('NFKC').trim().toLowerCase().replace(/[−–]/g, '-').replace(/\s+/g, ' ').replace(/ ?, ?/g, ',');
 }
@@ -36,8 +72,8 @@ export function complete(q, answer) {
   if (q.type === 'fib') return normalize(answer).length > 0;
   return Array.isArray(answer) && answer.length === q.pairs.length && answer.every(a => Number.isInteger(a) && a >= 0 && a < q.pairs.length);
 }
-export function createSession(questions, mode, now = Date.now()) {
-  return { version: VERSION, mode, ids: questions.map(q => q.id), index: 0, answers: {}, draft: null, drafts: {},
+export function createSession(questions, mode, now = Date.now(), arithmeticPercent = 50) {
+  return { version: VERSION, mode, arithmeticPercent, ids: questions.map(q => q.id), index: 0, answers: {}, draft: null, drafts: {},
     order: Object.fromEntries(questions.map(q => [q.id, shuffle(q.type === 'mcq' ? q.options.map((_, i) => i) : q.type === 'match' ? q.pairs.map((_, i) => i) : [])])),
     hinted: [], start: now, deadline: mode === 'mock' ? now + DURATION : null, finished: false };
 }

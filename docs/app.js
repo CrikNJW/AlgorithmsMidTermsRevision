@@ -1,6 +1,6 @@
-import { lectures, questions, setNames } from './questions.js?v=2026-10-05.3';
-import { selectQuestions, createSession, complete, remaining, validSession, upgradeSession, currentAnswer, recordAnswer } from './engine.js?v=2026-10-05.3';
-import { showSlides } from './slide-viewer.js?v=2026-10-05.3';
+import { lectures, questions, setNames } from './questions.js?v=2026-10-05.4';
+import { selectFocusedQuestions, planQuestionMix, focusRatios, createSession, complete, remaining, validSession, upgradeSession, currentAnswer, recordAnswer } from './engine.js?v=2026-10-05.4';
+import { showSlides } from './slide-viewer.js?v=2026-10-05.4';
 
 const main = document.querySelector('main');
 const key = 'algorithm-lab-session-v1';
@@ -13,11 +13,12 @@ let mode = 'practice';
 let selected = [0,1,2,3,4,5];
 let count = '20';
 let questionSet = 'all';
+let arithmeticPercent = 50;
 let onlyMissed = false;
 let timerWarning = false;
 try {
   const saved = JSON.parse(localStorage.getItem(key));
-  if (validSession(saved, questions)) session = upgradeSession(saved);
+  if (validSession(saved, questions)) { session = upgradeSession(saved); arithmeticPercent = session.arithmeticPercent ?? 50; }
 } catch { /* An old or damaged save never prevents a new session. */ }
 function save() {
   try { localStorage.setItem(key, JSON.stringify(session)); }
@@ -42,12 +43,18 @@ function home() {
       <div class="section-title topics-heading"><h2>Pick your lectures</h2><button class="text-button" id="toggle-all">${selected.length===6?'Clear all':'Select all'}</button></div>
       <div class="lecture-grid">${lectures.map(l=>`<label class="lecture-card ${selected.includes(l.id)?'checked':''}"><input type="checkbox" name="lecture" value="${l.id}" ${selected.includes(l.id)?'checked':''}><span class="lecture-number">${String(l.id).padStart(2,'0')}</span><span class="lecture-text"><strong>${l.title}</strong><span>${l.subtitle}</span></span><span class="question-count">${questions.filter(q=>q.lecture===l.id&&(questionSet==='all'||q.set===Number(questionSet))).length} Qs</span></label>`).join('')}</div>
       <p class="small-note">Lecture 00 applies the introductory learning objectives; it is mainly an orientation lecture.</p>
+      <section class="focus-controls" aria-labelledby="focus-heading"><h3 id="focus-heading">Question focus</h3>
+      <div class="focus-presets" role="group" aria-label="Question focus presets">${Object.entries(focusRatios).map(([name,ratio])=>`<button type="button" class="secondary" data-focus="${name}" aria-pressed="${arithmeticPercent===ratio*100}">${name[0].toUpperCase()+name.slice(1)}</button>`).join('')}</div>
+      <p class="small-note">Arithmetic: calculations, exact counts and worked traces. Conceptual: principles, correctness and asymptotic reasoning.</p>
+      <div class="focus-slider-label"><label for="arithmetic-percent">Arithmetic percentage</label><output id="focus-ratio" for="arithmetic-percent"></output></div>
+      <input id="arithmetic-percent" type="range" min="0" max="100" step="1" value="${arithmeticPercent}" aria-describedby="focus-availability">
+      <p id="focus-availability" class="small-note"></p></section>
       <div class="session-controls"><label>Question set<select id="question-set"><option value="all" ${questionSet==='all'?'selected':''}>All sets</option>${Object.entries(setNames).map(([n,name])=>`<option value="${n}" ${questionSet===n?'selected':''}>Set ${n} · ${name}</option>`).join('')}</select></label><label ${mode==='mock'?'hidden':''}>Questions<select id="question-count"><option value="10" ${count==='10'?'selected':''}>10 questions</option><option value="20" ${count==='20'?'selected':''}>20 questions</option><option value="all" ${count==='all'?'selected':''}>All selected questions</option></select></label><div class="session-summary" id="session-summary"></div><button class="primary" id="start">${mode==='mock'?'Start mock test':'Start practice'}</button></div>
       <p id="setup-error" class="error-text" role="alert"></p>
       <div class="rules"><span aria-hidden="true">↳</span><p>Use Back and Next to revisit questions and revise answers.<br>One point per question; matching needs every pair correct.</p></div>
     </section>
     <aside class="desk-sidebar"><section class="exam-card"><p class="eyebrow">TEST 01 / THE REAL THING</p><h2>6 October 2026</h2><p class="exam-time">14:30–15:30 <span>SGT</span></p><div class="arrival"><span>Be there by</span><strong>14:15</strong></div><ul class="checklist"><li>Student card & attendance signature</li><li>Laptop & charger</li><li>Check school Wi-Fi and Examena</li><li>Closed book · No calculator needed</li><li>Devices in your bag, bag at the front</li></ul><p class="venue-note">Check your assigned venue in the venue file. That file is not in this repository.</p></section>
-    <section class="study-note"><span class="note-mark">i</span><h3>A practice companion</h3><p>Original questions based on your lecture PDFs, with page references in every explanation. Set 3 practises Tutorials 1–5 under the lecture each tutorial covers. These are revision questions, not predictions of the test.</p><p>Mock questions are balanced across your selected lectures. This balance is for practice; the real test weighting is unknown.</p></section>
+    <section class="study-note"><span class="note-mark">i</span><h3>A practice companion</h3><p>Original questions based on your lecture PDFs, with page references in every explanation. Set 3 practises Tutorials 1–5 under the lecture each tutorial covers. Set 4 adds 20 conceptual questions per lecture. These are revision questions, not predictions of the test.</p><p>Mock questions are balanced across your selected lectures. This balance is for practice; the real test weighting is unknown.</p></section>
     ${session?.finished?`<button class="secondary full-width" id="last-result">View last session results</button>`:''}
     </aside></div>
     <details class="source-notes"><summary>Source notes & notation</summary><p>Referenced pages from your lecture PDFs are available in the slide viewer. Page references use PDF page numbers. Questions use a constant-cost arithmetic model unless stated otherwise. Complexity questions asking for a tight bound distinguish Θ from a merely valid O upper bound.</p><p>Corrections are explained where relevant: Θ is a tight bound, not synonymous with average case (L01 p.31; formal definitions in L02 pp.25–27). The 33-minute schedule in L05 p.48 omits a job. The Master theorem questions use the three-case version actually stated in L03. L04 p.6’s “at most one swap per item” only holds for the item placed first; Tutorial 4 Q2’s answer is n − 1. The quicksort traces follow the L04 animation (pivot swapped to index j), not the j − 1 in the code on p.35.</p><p>For the formal interpretation of asymptotic notation, see <a href="https://ocw.mit.edu/courses/6-100l-introduction-to-cs-and-programming-using-python-fall-2022/resources/6100l-lecture-22-version-2_mp4/" target="_blank" rel="noopener">MIT’s Big Oh and Theta lecture</a>.</p><p>The announcement’s year is interpreted as 2026, consistent with its opening sentence and deadline. Check the official course announcement for any updates.</p></details>`;
@@ -61,24 +68,36 @@ function home() {
   document.querySelector('#toggle-all').onclick=()=>{selected=selected.length===6?[]:[0,1,2,3,4,5];home();};
   document.querySelector('#question-set').onchange=e=>{questionSet=e.target.value;home();document.querySelector('#question-set').focus();};
   document.querySelector('#question-count').onchange=e=>{count=e.target.value;updateSetup();};
+  document.querySelector('#arithmetic-percent').oninput=e=>{arithmeticPercent=Number(e.target.value);updateSetup();};
+  main.querySelectorAll('[data-focus]').forEach(button=>button.onclick=()=>{arithmeticPercent=focusRatios[button.dataset.focus]*100;document.querySelector('#arithmetic-percent').value=arithmeticPercent;updateSetup();});
   document.querySelector('#start').onclick=start;
   document.querySelector('#last-result')?.addEventListener('click',()=>{results();focusHeading();});
   updateSetup();
 }
 function selectedBank() { return questions.filter(q=>selected.includes(q.lecture)&&(questionSet==='all'||q.set===Number(questionSet))); }
 function updateSetup() {
-  const pool=selectedBank().length;
+  const bank=selectedBank(),pool=bank.length;
   const n=mode==='mock'?25:Math.min(pool,count==='all'?pool:Number(count));
-  document.querySelector('#session-summary').innerHTML=`<strong>${n} questions</strong><span>${mode==='mock'?'60-minute timer · Hints & slides':'Untimed · Hints & slides'}</span>`;
+  const mix=planQuestionMix(bank,selected,n,arithmeticPercent);
+  document.querySelector('#focus-ratio').textContent=`${arithmeticPercent}% arithmetic · ${100-arithmeticPercent}% conceptual`;
+  document.querySelector('#arithmetic-percent').setAttribute('aria-valuetext',`${arithmeticPercent} percent arithmetic, ${100-arithmeticPercent} percent conceptual`);
+  main.querySelectorAll('[data-focus]').forEach(button=>button.setAttribute('aria-pressed',String(arithmeticPercent===focusRatios[button.dataset.focus]*100)));
+  const actual=mix.total?Math.round(mix.arithmetic/mix.total*100):0;
+  let note='Percentages are rounded to whole questions. Lecture coverage stays balanced.';
+  if(mode!=='mock'&&count==='all')note='All selected questions includes the entire pool. Choose 10 or 20 questions to control the mix.';
+  else if(mix.arithmetic!==mix.requested)note='Closest available mix for these lectures and sets. Select more sets or lectures for a closer match.';
+  document.querySelector('#focus-availability').textContent=note;
+  document.querySelector('#session-summary').innerHTML=`<strong>${mix.total} questions</strong><span id="actual-mix" aria-live="polite">${mix.arithmetic} arithmetic · ${mix.conceptual} conceptual${mix.total?` (${actual}% / ${100-actual}%)`:''}</span><span>${mode==='mock'?'60-minute timer · Hints & slides':'Untimed · Hints & slides'}</span>`;
   const message=!selected.length?'Choose at least one lecture.':!pool?'Lecture 00 has no tutorial questions. Choose another lecture or set.':mode==='mock'&&pool<25?'Choose more sets or lectures to provide 25 mock-test questions.':'';
   document.querySelector('#setup-error').textContent=message;
   document.querySelector('#start').disabled=Boolean(message);
 }
+
 function start() {
   const pool=selectedBank();
   if(!pool.length || (mode==='mock'&&pool.length<25))return;
   const n=mode==='mock'?25:count==='all'?pool.length:Math.min(Number(count),pool.length);
-  session=createSession(selectQuestions(pool,selected,n),mode);
+  session=createSession(selectFocusedQuestions(pool,selected,n,arithmeticPercent),mode,Date.now(),arithmeticPercent);
   timerWarning=false;
   save(); quiz(); focusHeading();
 }
@@ -93,7 +112,7 @@ function quiz() {
   main.innerHTML=`<div class="session-top"><div><p class="eyebrow">${isMock?'TIMED PRACTICE':'GUIDED PRACTICE'}</p><span class="session-rule">Move back and forth · Revise your answers any time before finishing</span></div><div class="session-top-actions">${isMock?`<div class="timer" aria-label="Time remaining"><span>TIME LEFT</span><strong id="timer"></strong></div>`:badge('UNTIMED')}<button id="end" class="text-button">End session</button></div></div>
     <div class="progress-track" role="progressbar" aria-label="Questions answered" aria-valuemin="0" aria-valuemax="${session.ids.length}" aria-valuenow="${answered}"><span style="width:${progress}%"></span></div>
     <div class="quiz-layout"><aside class="quiz-sidebar"><span class="large-number">${String(session.index+1).padStart(2,'0')}<small> / ${session.ids.length}</small></span><p class="eyebrow">LECTURE ${String(q.lecture).padStart(2,'0')}</p><h2>${lectures[q.lecture].title}</h2><p>${esc(q.topic)}</p><div class="mini-rule"></div><p class="small-note">${isMock?'The timer keeps running while you read slides. Full answer explanations appear when the session ends.':'Use the hints or lecture slides when you need them. Check an answer, then revise it or move on.'}</p><p class="save-note">Progress saved in this browser</p></aside>
-    <section class="question-card"><div class="question-meta">${badge(typeLabel[q.type])}${badge(q.difficulty,'muted')}<span>${q.id} · Set ${q.set}</span></div><h1 tabindex="-1" class="question-prompt">${esc(q.prompt)}</h1>
+    <section class="question-card"><div class="question-meta">${badge(typeLabel[q.type])}${badge(q.difficulty,'muted')}${badge(q.focus==='arithmetic'?'Arithmetic':'Conceptual','muted')}<span>${q.id} · Set ${q.set}</span></div><h1 tabindex="-1" class="question-prompt">${esc(q.prompt)}</h1>
     <form id="answer-form"><fieldset><legend class="sr-only">Your answer</legend>${answerFields(q,answer)}</fieldset>
     <div class="question-help"><button type="button" id="hint" class="secondary hint-button" aria-expanded="${session.hinted.includes(q.id)}" aria-controls="hint-text">Need a hint?</button><button type="button" id="show-slides" class="secondary" aria-haspopup="dialog">Show relevant slides</button></div><div id="hint-text" class="hint-box" ${session.hinted.includes(q.id)?'':'hidden'}>${esc(q.hint)}</div>
     ${!isMock&&record&&!record.skipped?feedback(q,record):''}
@@ -186,6 +205,7 @@ setInterval(tick,1000);
 document.addEventListener('visibilitychange',tick);
 function results() {
   view='results';
+  const arithmeticCount=session.ids.filter(id=>byId[id].focus==='arithmetic').length;
   const rows=session.ids.map(id=>({q:byId[id],r:session.answers[id]}));
   const correct=rows.filter(({r})=>r.correct).length;
   const skipped=rows.filter(({r})=>r.skipped).length;
@@ -193,13 +213,13 @@ function results() {
   const percent=Math.round(correct/rows.length*100);
   const seconds=Math.max(0,Math.floor(((session.mode==='mock'?Math.min(session.ended,session.deadline):session.ended)-session.start)/1000));
   main.innerHTML=`<div class="page-heading"><div><p class="eyebrow">${session.mode==='mock'?'TIMED PRACTICE':'GUIDED PRACTICE'} / COMPLETE</p><h1 tabindex="-1">${session.timedOut?'Time’s up. Let’s review.':'Every answer is a way forward.'}</h1><p class="subheading">${session.timedOut?'Your complete current answer was saved and the test submitted automatically.':'Revisit the reasoning, then put it into practice.'}</p></div><button id="new-session" class="secondary">New session</button></div>
-    <div class="results-grid"><section class="score-card"><div class="score-ring" style="--score:${percent}%"><strong>${percent}<span>%</span></strong></div><div><h2>${correct} / ${rows.length} correct</h2><p>${skipped} unanswered · ${Math.floor(seconds/60)}m ${seconds%60}s</p><p>${session.hinted.length} question${session.hinted.length===1?'':'s'} with hints</p></div></section>
+    <div class="results-grid"><section class="score-card"><div class="score-ring" style="--score:${percent}%"><strong>${percent}<span>%</span></strong></div><div><h2>${correct} / ${rows.length} correct</h2><p>${arithmeticCount} arithmetic · ${rows.length-arithmeticCount} conceptual</p><p>${skipped} unanswered · ${Math.floor(seconds/60)}m ${seconds%60}s</p><p>${session.hinted.length} question${session.hinted.length===1?'':'s'} with hints</p></div></section>
     <section class="breakdown"><h2>By lecture</h2>${lectures.filter(l=>rows.some(({q})=>q.lecture===l.id)).map(l=>{const entries=rows.filter(({q})=>q.lecture===l.id),n=entries.filter(({r})=>r.correct).length;return `<div class="breakdown-row"><span>${String(l.id).padStart(2,'0')} · ${l.title}</span><div class="mini-track"><span style="width:${n/entries.length*100}%"></span></div><strong>${n}/${entries.length}</strong></div>`;}).join('')}</section></div>
     <div class="review-heading"><div><h2>Answer review</h2><p>One point per question. Matching is scored only when all pairs are correct.</p></div><div class="review-controls"><label class="filter-label"><input id="only-missed" type="checkbox" ${onlyMissed?'checked':''}> Missed only (${missed.length})</label>${missed.length?'<button id="retry" class="primary">Practise missed questions</button>':''}</div></div>
     <div class="review-list">${rows.filter(({r})=>!onlyMissed||!r.correct).map(({q,r})=>`<details class="review-item"><summary><span class="result-indicator ${r.correct?'yes':'no'}">${r.correct?'✓':r.skipped?'—':'×'}</span><span><span class="review-meta">${q.id} · Set ${q.set} · ${typeLabel[q.type]} · ${r.skipped?'Unanswered':r.correct?'Correct':'Incorrect'}${session.hinted.includes(q.id)?' · Hint used':''}</span><strong>${esc(q.prompt)}</strong></span><span class="expand-icon" aria-hidden="true">+</span></summary><div class="review-content"><div class="answer-comparison"><p><strong>Your answer</strong><br>${esc(answerText(q,r.value))}</p><p><strong>Correct answer</strong><br>${esc(correctText(q))}</p></div><h3>Why this answer</h3><p>${esc(q.explanation)}</p><p class="review-hint"><strong>Hint:</strong> ${esc(q.hint)}</p>${source(q)}</div></details>`).join('')||'<p class="empty-state">No missed questions. Nicely done.</p>'}</div>`;
   document.querySelector('#new-session').onclick=()=>{home();focusHeading();};
   document.querySelector('#only-missed').onchange=e=>{onlyMissed=e.target.checked;results();document.querySelector('#only-missed').focus();};
-  document.querySelector('#retry')?.addEventListener('click',()=>{session=createSession(missed.map(({q})=>q),'practice');onlyMissed=false;save();quiz();focusHeading();});
+  document.querySelector('#retry')?.addEventListener('click',()=>{session=createSession(missed.map(({q})=>q),'practice',Date.now(),session.arithmeticPercent??50);onlyMissed=false;save();quiz();focusHeading();});
 }
 function confirmAction(title,description,label,action) {
   const dialog=document.createElement('dialog');
